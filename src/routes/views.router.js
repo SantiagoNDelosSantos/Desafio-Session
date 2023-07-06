@@ -61,7 +61,11 @@ router.get('/login', (req, res) => {
 })
 
 router.get('/api/user', (req, res) => {
-    res.send({ user: req.session.user })
+    res.send({ user: req.session.user });
+})
+
+router.get('/', (req, res) => {
+    res.render('profile', {user: req.session.user});
 })
 
 

@@ -8,6 +8,7 @@ fetch('/api/user')
     // Aquí recibimos los datos del usuario en la variable 'data'
     var userData = data.user;
     // Ahora puedes mostrar el Sweet Alert de bienvenida con los datos del usuario
+    console.log(userData)
     Swal.fire({
       icon: 'success',
       title: '¡Bienvenido!',
@@ -18,11 +19,12 @@ fetch('/api/user')
     console.error('Error al obtener los datos del usuario:', error);
   });
 
+
+  
 // Capturamos la tabla de productos del DOM:
 const tableProd = document.getElementById('tableProd');
 
 function allProducts() {
-
 
   // Primera carga de todos los productos:
 

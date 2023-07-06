@@ -5,7 +5,6 @@ form.addEventListener('submit', async (e) => {
     const data = new FormData(form);
     const obj = {};
     data.forEach((value, key) => (obj[key] = value));
-
     try {
         const response = await fetch('/api/sessions/login', {
             method: 'POST',
@@ -14,7 +13,6 @@ form.addEventListener('submit', async (e) => {
                 'Content-Type': 'application/json',
             },
         });
-
         if (response.ok) {
             window.location.replace('/realtimeproducts');
         } else {
@@ -23,7 +21,6 @@ form.addEventListener('submit', async (e) => {
                 title: 'Error de inicio de sesión',
                 text: 'Correo o contraseña incorrectos.',
             });
-            
         }
     } catch (error) {
         console.log('Error en la solicitud:', error);

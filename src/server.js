@@ -14,6 +14,7 @@ import routerProducts from './routes/products.router.js';
 import routerCart from './routes/cart.router.js'
 import viewsRouter from "./routes/views.router.js";
 
+
 import {
     Server,
     Socket
@@ -22,12 +23,14 @@ import {
 import ManagerProducts from './daos/mongodb/ProductsManager.class.js';
 import ManagerMessage from './daos/mongodb/MessagesManager.class.js';
 import ManagerCarts from './daos/mongodb/CartManager.class.js';
+import { logout } from './public/js/profile.js';
 
 // Iniciamos el servidor:
 const app = express();
 
 // Conexión Mongoose: 
-const connection = mongoose.connect('mongodb+srv://santiagodelossantos630:D2jqGLvQZMF9LXbB@cluster0.tmhnws9.mongodb.net/?retryWrites=true&w=majority');
+const connection = mongoose.connect('mongodb+srv://santiagodelossantos630:D2jqGLvQZMF9LXbB@cluster0.tmhnws9.mongodb.net/?retryWrites=true&w=majority', {useNewUrlParser: true, useUnifiedTopology: true }
+);
 
 // Rutas extendidas:
 app.use(express.json());
@@ -37,23 +40,22 @@ app.use(urlencoded({
 // Configuración de archivos estáticos
 app.use(express.static(__dirname + '/public'));
 
-// SESSION: 
+// SESSION:  
 app.use(session({
     store: new MongoStore({
         mongoUrl: 'mongodb+srv://santiagodelossantos630:D2jqGLvQZMF9LXbB@cluster0.tmhnws9.mongodb.net/?retryWrites=true&w=majority',
-        ttl: 15,
     }),
     secret: 'mongoSecret',
-    resave:true,
-    saveUninitialized: false, 
-}))
-
+    resave: true,
+    saveUninitialized: false
+})
+);
 
 // Configuración Handlebars
 app.engine('handlebars', handlebars.engine());
-
 app.set('views', __dirname + '/views');
 app.set('view engine', 'handlebars');
+
 
 // Servidor HTTP:
 const expressServer = app.listen(8080, () => {
@@ -62,6 +64,8 @@ const expressServer = app.listen(8080, () => {
 
 // Servidor Socket.io escuchando servidor HTTP:
 const socketServer = new Server(expressServer);
+
+// Managers:
 export const pdcMANGR = new ManagerProducts();
 export const smsMANGR = new ManagerMessage();
 export const cartMANGR = new ManagerCarts();
@@ -184,3 +188,5 @@ app.use('/api/sessions', sessionRouter);
 app.use('/api/chat/', routerMessage)
 app.use('/api/products/', routerProducts);
 app.use('/api/carts/', routerCart);
+
+app.get('/logout', logout);

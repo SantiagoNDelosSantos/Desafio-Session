@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const collection = 'users'
+const collection = 'users';
 
 const schema = new mongoose.Schema({
     first_name: {
@@ -15,11 +15,15 @@ const schema = new mongoose.Schema({
         type: String,
         required: true
     },
-    age:{
+    age: {
         type: Number,
         required: true
     },
     password: {
+        type: String,
+        required: true
+    },
+    role: {
         type: String,
         required: true
     }
