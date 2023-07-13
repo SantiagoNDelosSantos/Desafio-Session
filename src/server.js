@@ -154,7 +154,6 @@ socketServer.on("connection", async (socket) => {
         socketServer.emit("CARTID", (cartCID));
     })
 
-
     //Messages:
 
     // Escuchamos el evento addMessage y recibimos el mensaje:
@@ -188,7 +187,7 @@ app.use('/', viewsRouter);
 app.use('/api/sessions', sessionRouter);
 
 app.use('/api/chat/', routerMessage)
-app.use('/api/products/', routerProducts);
+app.use('/api/realtimeproducts', routerProducts);
 app.use('/api/carts/', routerCart);
 
 app.get('/logout', logout);

@@ -2,23 +2,15 @@ import {
     Router
 } from 'express';
 import userModel from '../daos/mongodb/models/users.model.js';
-import { createHash, isValidPassword } from '../utils.js';
 import passport from 'passport';
-
+import {
+    createHash,
+    isValidPassword
+} from '../utils.js';
 
 const router = Router();
 
 // Registro:
-
-router.post('/register', passport.authenticate('register', {failureRedirect: '/failregister'}), async (req,res) => { res.send({status: "success", message: "User registered"})})
-
-router.get('/failregister', async(req, res) => {
-    console.log("Failed Strategy");
-    res.send({error: "Failed"});
-})
-
-
-
 router.post('/register', async (req, res) => {
     try {
         const {
@@ -28,130 +20,92 @@ router.post('/register', async (req, res) => {
             age,
             password
         } = req.body;
-        const exist = await userModel.findOne({ email });
-        
+        const exist = await userModel.findOne({
+            email
+        });
+
         if (exist) {
             return res.status(400).send({
                 status: 'error',
-                message: 'Usuario ya registrado.'
+                error: 'El usuario ya existe. Presione "Ingresa aquí" para iniciar sesión.',
             });
         }
+
         let result = await userModel.create({
             first_name,
             last_name,
             email,
             age,
             password: createHash(password),
-            role: "User",
+            role: 'User',
         });
+
         res.send({
             status: 'success',
-            message: 'Usuario registrado.'
+            message: 'Usuario registrado.',
         });
     } catch (error) {
-        res.send(401).send({
+        res.status(500).send({
             error: error.message
         });
     }
 });
+
 
 
 // Login:
-
-
-router.post('/login', passport.authenticate('login', {failureRedirect: '/faillogin'}), async (req, res) => {
-    if(!req.user) return res.status(400).send({status:"error", error:"Invalid credentials"})
-    req.session.user ={
-        first_name: req.user.first_name,
-        last_name: req.user.last_name,
-        age: req.user.age,
-        email: req.user.email
-    }
-    res.send({status: "success", payload: req.session.user})
-})
-
-router.get('/faillogin', (req, res) => {
-    res.send({error:"Failed Login"})
-})
-
-
-
-
-
-
-router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        let user;
-        if (email === "adminCoder@coder.com" && password === "adminCod3r123") {
-            user = {
-                first_name: "Admin",
-                last_name: "CoderHouse",
-                email: "adminCoder@coder.com",
-                age: 0,
-                role: "Admin",
-            }
-        } else {
-            user = await userModel.findOne({email: email});
+router.post('/login', (req, res, next) => {
+    passport.authenticate('login', (err, user, info) => {
+        if (err) {
+            return next(err);
         }
         if (!user) {
-            console.log("Correo incorrecto.");
-            return res.status(401).send({
+            return res.status(400).send({
                 status: 'error',
-                message: 'Correo incorrecto.'
+                error: info.message
             });
         }
-        if(!isValidPassword(user, password)){
-            console.log("Corntraseña incorrecta.");
-            return res.status(401).send({
-                status: 'error',
-                message: 'Contraseña incorrecta.'
+        req.logIn(user, err => {
+            if (err) {
+                return next(err);
+            }
+            req.session.user = {
+                first_name: user.first_name,
+                last_name: user.last_name,
+                age: user.age,
+                email: user.email,
+                role: "User"
+            };
+            return res.send({
+                status: 'success',
+                payload: req.session.user
             });
-        }
-        req.session.user = {
-            name: user.first_name,
-            apellido: user.last_name,
-            email: user.email,
-            age: user.age,
-            role: user.role,
-        };
-        res.send({
-            status: 'success',
-            message: req.session.user,
         });
-    } catch (error) {
-        res.status(500).send({
-            error: error.message
-        });
-    }
+    })(req, res, next);
 });
 
 
-// Github: 
-
-router.get('/github', passport.authenticate('github', {scope:'user: email' }), 
-    (req,res)=>{}
+// Autenticación con GitHub:
+router.get('/github', passport.authenticate('github', {
+        scope: 'user: email'
+    }),
+    (req, res) => {}
 )
 
-router.get('/githubcallback', passport.authenticate('github', {failureRedirect: '/login'}), async (req, res) => {
-    console.log('exito');
+router.get('/githubcallback', passport.authenticate('github', {
+    failureRedirect: '/login'
+}), async (req, res) => {
+    console.log('Exito');
     req.session.user = req.user;
-    res.redirect('/');
+    res.redirect('/realtimeproducts');
 })
 
 
-
-//Cerrar session:
-router.get("/logout", async (req, res) => {
-    try {
-        // Destruir sesión
-        req.session.destroy();
-        res.send("Sesión cerrada");
-    } catch (error) {
-        res.status(500).send({
-            error: error.message
-        });
-    }
+// Cerrar sesión:
+router.get('/logout', (req, res) => {
+    req.logout(); // Eliminar la sesión de Passport
+    req.session.destroy(); // Destruir sesión
+    res.send('Sesión cerrada');
 });
 
 export default router;

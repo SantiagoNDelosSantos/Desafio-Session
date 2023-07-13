@@ -65,8 +65,21 @@ router.get('/api/user', (req, res) => {
 })
 
 router.get('/', (req, res) => {
-    res.render('profile', {user: req.session.user});
-})
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    const { first_name, last_name, email, age, role } = req.session.user;
+    res.render('profile', {
+        user: {
+            first_name,
+            last_name,
+            email,
+            age,
+            role
+        }
+    });
+});
+
 
 
 // Exportamos router: 

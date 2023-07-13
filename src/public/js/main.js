@@ -12,7 +12,7 @@ fetch('/api/user')
     Swal.fire({
       icon: 'success',
       title: '¡Bienvenido!',
-      text: `Hola ${userData.name}, has iniciado sesión con éxito.`,
+      text: `Hola ${userData.first_name}, has iniciado sesión con éxito.`,
     });
   })
   .catch((error) => {

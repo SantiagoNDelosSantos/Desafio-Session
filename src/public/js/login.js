@@ -13,13 +13,15 @@ form.addEventListener('submit', async (e) => {
                 'Content-Type': 'application/json',
             },
         });
+        const json = await response.json();
         if (response.ok) {
+            form.reset();
             window.location.replace('/realtimeproducts');
         } else {
             Swal.fire({
                 icon: 'error',
                 title: 'Error de inicio de sesión',
-                text: 'Correo o contraseña incorrectos.',
+                text: json.error || 'Error en el inicio de sesión. Inténtalo de nuevo.',
             });
         }
     } catch (error) {
