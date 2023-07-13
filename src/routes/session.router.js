@@ -2,10 +2,23 @@ import {
     Router
 } from 'express';
 import userModel from '../daos/mongodb/models/users.model.js';
+import { createHash, isValidPassword } from '../utils.js';
+import passport from 'passport';
+
 
 const router = Router();
 
 // Registro:
+
+router.post('/register', passport.authenticate('register', {failureRedirect: '/failregister'}), async (req,res) => { res.send({status: "success", message: "User registered"})})
+
+router.get('/failregister', async(req, res) => {
+    console.log("Failed Strategy");
+    res.send({error: "Failed"});
+})
+
+
+
 router.post('/register', async (req, res) => {
     try {
         const {
@@ -15,9 +28,8 @@ router.post('/register', async (req, res) => {
             age,
             password
         } = req.body;
-        const exist = await userModel.findOne({
-            email
-        });
+        const exist = await userModel.findOne({ email });
+        
         if (exist) {
             return res.status(400).send({
                 status: 'error',
@@ -29,19 +41,9 @@ router.post('/register', async (req, res) => {
             last_name,
             email,
             age,
-            password,
+            password: createHash(password),
             role: "User",
         });
-
-        // Guardar datos del usuario en la sesión
-        req.session.user = {
-            name: result.first_name,
-            apellido: result.last_name,
-            email: result.email,
-            age: result.age,
-            role: result.role
-        };
-
         res.send({
             status: 'success',
             message: 'Usuario registrado.'
@@ -56,12 +58,30 @@ router.post('/register', async (req, res) => {
 
 // Login:
 
+
+router.post('/login', passport.authenticate('login', {failureRedirect: '/faillogin'}), async (req, res) => {
+    if(!req.user) return res.status(400).send({status:"error", error:"Invalid credentials"})
+    req.session.user ={
+        first_name: req.user.first_name,
+        last_name: req.user.last_name,
+        age: req.user.age,
+        email: req.user.email
+    }
+    res.send({status: "success", payload: req.session.user})
+})
+
+router.get('/faillogin', (req, res) => {
+    res.send({error:"Failed Login"})
+})
+
+
+
+
+
+
 router.post('/login', async (req, res) => {
     try {
-        const {
-            email,
-            password
-        } = req.body;
+        const { email, password } = req.body;
         let user;
         if (email === "adminCoder@coder.com" && password === "adminCod3r123") {
             user = {
@@ -72,16 +92,20 @@ router.post('/login', async (req, res) => {
                 role: "Admin",
             }
         } else {
-            user = await userModel.findOne({
-                email: email,
-                password: password
-            });
+            user = await userModel.findOne({email: email});
         }
         if (!user) {
-            console.log("Correo o contraseña incorrectos.");
+            console.log("Correo incorrecto.");
             return res.status(401).send({
                 status: 'error',
-                message: 'Correo o contraseña incorrectos.'
+                message: 'Correo incorrecto.'
+            });
+        }
+        if(!isValidPassword(user, password)){
+            console.log("Corntraseña incorrecta.");
+            return res.status(401).send({
+                status: 'error',
+                message: 'Contraseña incorrecta.'
             });
         }
         req.session.user = {
@@ -101,6 +125,20 @@ router.post('/login', async (req, res) => {
         });
     }
 });
+
+
+// Github: 
+
+router.get('/github', passport.authenticate('github', {scope:'user: email' }), 
+    (req,res)=>{}
+)
+
+router.get('/githubcallback', passport.authenticate('github', {failureRedirect: '/login'}), async (req, res) => {
+    console.log('exito');
+    req.session.user = req.user;
+    res.redirect('/');
+})
+
 
 
 //Cerrar session:

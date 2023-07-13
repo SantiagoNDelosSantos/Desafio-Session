@@ -1,12 +1,9 @@
-import express, {
-    urlencoded
-} from 'express';
+import express, { urlencoded } from 'express';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
 import handlebars from "express-handlebars";
 import __dirname from "./utils.js";
-
 
 import sessionRouter from './routes/session.router.js'
 import routerMessage from './routes/message.router.js'
@@ -14,31 +11,39 @@ import routerProducts from './routes/products.router.js';
 import routerCart from './routes/cart.router.js'
 import viewsRouter from "./routes/views.router.js";
 
-
-import {
-    Server,
-    Socket
-} from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import ManagerProducts from './daos/mongodb/ProductsManager.class.js';
 import ManagerMessage from './daos/mongodb/MessagesManager.class.js';
 import ManagerCarts from './daos/mongodb/CartManager.class.js';
 import { logout } from './public/js/profile.js';
 
+import passport from 'passport';
+import initializePassport from './config/passport.config.js';
+
 // Iniciamos el servidor:
 const app = express();
 
 // Conexión Mongoose: 
-const connection = mongoose.connect('mongodb+srv://santiagodelossantos630:D2jqGLvQZMF9LXbB@cluster0.tmhnws9.mongodb.net/?retryWrites=true&w=majority', {useNewUrlParser: true, useUnifiedTopology: true }
-);
+const connection = mongoose.connect('mongodb+srv://santiagodelossantos630:D2jqGLvQZMF9LXbB@cluster0.tmhnws9.mongodb.net/?retryWrites=true&w=majority', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
 
 // Rutas extendidas:
 app.use(express.json());
-app.use(urlencoded({
-    extended: true
-}));
+app.use(urlencoded({ extended: true }));
 // Configuración de archivos estáticos
 app.use(express.static(__dirname + '/public'));
+
+// Configuración Handlebars
+app.engine('handlebars', handlebars.engine());
+app.set('views', __dirname + '/views');
+app.set('view engine', 'handlebars');
+
+
+// Passport:
+initializePassport();
 
 // SESSION:  
 app.use(session({
@@ -48,13 +53,10 @@ app.use(session({
     secret: 'mongoSecret',
     resave: true,
     saveUninitialized: false
-})
-);
+}));
 
-// Configuración Handlebars
-app.engine('handlebars', handlebars.engine());
-app.set('views', __dirname + '/views');
-app.set('view engine', 'handlebars');
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 // Servidor HTTP:
